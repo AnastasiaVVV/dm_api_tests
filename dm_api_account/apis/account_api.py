@@ -42,3 +42,39 @@ class AccountApi:
             headers=headers
         )
         return response
+
+    def put_v1_account_email(
+            self,
+            json_data
+    ):
+        """
+        Change registered user email
+        :return:
+        """
+        # json_data = {
+        #     'login': login,
+        #     'password': password,
+        #     'email': email,
+        # }
+
+        response = requests.put(
+            url=f'{self.host}/v1/account/email',
+            json=json_data
+        )
+
+        return response
+
+    def get_v1_account(
+            self,
+            token
+    ):
+        params = {
+            'X-Dm-Auth-Token': token,
+        }
+
+        response = requests.get(
+            url=f'{self.host}/v1/account',
+            params=params
+        )
+
+        return response
