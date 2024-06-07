@@ -64,17 +64,17 @@ class AccountApi:
 
         return response
 
-    def get_v1_account(
-            self,
-            token
-    ):
-        params = {
-            'X-Dm-Auth-Token': token,
-        }
-
-        response = requests.get(
-            url=f'{self.host}/v1/account',
-            params=params
-        )
-
-        return response
+    # def get_v1_account(
+    #         self,
+    #         token
+    # ):
+    #     params = {
+    #         'X-Dm-Auth-Token': token,
+    #     }
+    #
+    #     response = requests.get(
+    #         url=f'{self.host}/v1/account',
+    #         params=params
+    #     )
+    #
+    #     return response
