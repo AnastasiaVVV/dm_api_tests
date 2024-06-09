@@ -51,11 +51,6 @@ class AccountApi:
         Change registered user email
         :return:
         """
-        # json_data = {
-        #     'login': login,
-        #     'password': password,
-        #     'email': email,
-        # }
 
         response = requests.put(
             url=f'{self.host}/v1/account/email',

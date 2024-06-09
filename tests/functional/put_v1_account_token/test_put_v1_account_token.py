@@ -1,4 +1,5 @@
 from json import loads
+import random
 
 from dm_api_account.apis.account_api import AccountApi
 from dm_api_account.apis.login_api import LoginApi
@@ -10,7 +11,7 @@ def test_post_v1_account_token():
     account_api = AccountApi(host='http://5.63.153.31:5051')
     login_api = LoginApi(host='http://5.63.153.31:5051')
     mailhog_api = MailhogApi(host='http://5.63.153.31:5025')
-    login = 'morugova_test45089____78978'
+    login = f'morugova_test.{random.random()}'
     password = '123456789'
     email = f'{login}@mail.ru'
     json_data = {

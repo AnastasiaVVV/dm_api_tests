@@ -1,5 +1,6 @@
 import pprint
 from json import loads
+import random
 
 from dm_api_account.apis.account_api import AccountApi
 from dm_api_account.apis.login_api import LoginApi
@@ -12,7 +13,7 @@ def test_post_v1_account_email():
     account_api = AccountApi(host='http://5.63.153.31:5051')
     login_api = LoginApi(host='http://5.63.153.31:5051')
     mailhog_api = MailhogApi(host='http://5.63.153.31:5025')
-    login = 'morugova_test34097____896__45'
+    login = f'morugova_test.{random.random()}'
     password = '123456789'
     email = f'{login}@mail.ru'
     json_data = {
@@ -37,13 +38,12 @@ def test_post_v1_account_email():
 
     # Получить активационный токен
     token = get_activation_token_by_login(login, response)
-
+    print(f'Старый активационный токен: {token}')
     assert token is not None, f"Токен для пользователя {login} не был получен"
 
     # Активация пользователя
     response = account_api.put_v1_account_token(token=token)
-    print('урл активации пользователя: ')
-    print(f'http://5.63.153.31:5051/v1/account/{token}')
+    print(f'урл активации пользователя: http://5.63.153.31:5051/v1/account/{token}')
     print('активация пользователя: ')
     print(response.status_code)
     print(response.text)
@@ -53,15 +53,7 @@ def test_post_v1_account_email():
     print('старый почтовый ящик: ')
     print(email)
 
-    email = change_email_by_old_email(email)
-
-    print('до смены почтового ящика у пользователя: ')
-    print('login: ')
-    print(password)
-    print('password: ')
-    print(login)
-    print('email: ')
-    print(email)
+    email = f'string_{email}'
 
     json_data = {
         'login': login,
@@ -71,11 +63,8 @@ def test_post_v1_account_email():
     print('json_data: ')
     pprint.pprint(json_data)
     response = account_api.put_v1_account_email(json_data)
-    print('смена почтового ящика у пользователя: ')
-    print(response)
 
-    print('новый почтовый ящик: ')
-    print(email)
+    print(f'новый почтовый ящик: {email}')
 
     assert response.status_code == 200, "Почтовый ящик не был сменён"
 
@@ -89,8 +78,10 @@ def test_post_v1_account_email():
     print(response.text)
     assert response.status_code == 200, "Письма не были получены"
 
-    ## Получить активационный токен
-    token = get_activation_token_by_login(login, response)
+    ## Получить НОВЫЙ активационный токен
+
+    token = get_new_activation_token_by_login(login, response,email)
+    print(f'НОВЫЙ активационный токен: {token}')
     assert token is not None, f"Токен для пользователя {login} не был получен"
 
     ## Активация пользователя
@@ -135,10 +126,22 @@ def get_activation_token_by_login(
 
         if user_login == login:
             token = user_data['ConfirmationLinkUrl'].split('/')[-1]
+
     return token
 
-def change_email_by_old_email(
+def get_new_activation_token_by_login(
+        login,
+        response,
         email
 ):
-    email = f'string_{email}'
-    return email
+    token = None
+    for item in response.json()['items']:
+        user_data = loads(item['Content']['Body'])
+        user_login = user_data['Login']
+        user_new_email = item['Content']['Headers']['To'][0]
+
+        if user_login == login:
+            if user_new_email == email:
+                token = user_data['ConfirmationLinkUrl'].split('/')[-1]
+
+    return token
