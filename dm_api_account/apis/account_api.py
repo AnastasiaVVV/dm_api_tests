@@ -54,17 +54,17 @@ class AccountApi(RestClient):
 
         return response
 
-    # def get_v1_account(
-    #         self,
-    #         token
-    # ):
-    #     params = {
-    #         'X-Dm-Auth-Token': token,
-    #     }
-    #
-    #     response = requests.get(
-    #         url=f'{self.host}/v1/account',
-    #         params=params
-    #     )
-    #
-    #     return response
+    def get_v1_account(
+            self,
+            **kwargs
+    ):
+        """
+        Get current user
+        :param json_data:
+        :return:
+        """
+        response = self.get(
+            path=f'/v1/account',
+            **kwargs
+        )
+        return response
