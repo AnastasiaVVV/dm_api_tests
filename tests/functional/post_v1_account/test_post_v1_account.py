@@ -1,10 +1,11 @@
-from json import loads
-
 from helpers.account_helper import AccountHelper
+
 from restclient.configuration import Configuration as MailhogConfiguration
 from restclient.configuration import Configuration as DmApiConfiguration
+
 from services.dm_api_account import DMApiAccount
 from services.api_mailhog import MailHogApi
+
 import random
 import structlog
 
@@ -19,7 +20,6 @@ structlog.configure(
 )
 
 def test_post_v1_account():
-    # Регистрация пользователя
     mailhog_configuration = MailhogConfiguration(host='http://5.63.153.31:5025')
     dm_api_configuration = DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
 
@@ -31,5 +31,6 @@ def test_post_v1_account():
     login = f'morugova_test.{random.random()}'
     password = '123456789'
     email = f'{login}@mail.ru'
+
     account_helper.register_new_user(login=login, password=password, email=email)
     account_helper.user_login(login=login, password=password)
