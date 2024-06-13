@@ -50,11 +50,14 @@ def auth_account_helper(mailhog_api):
     dm_api_configuration = DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
     account = DMApiAccount(configuration=dm_api_configuration)
     account_helper = AccountHelper(dm_account_api=account, mailhog=mailhog_api)
+    account_helper.default_login = "morugova_test465758886__45"
+    account_helper.default_password = "123456789"
     account_helper.auth_client(
-        login="morugova_test465758886__45",
-        password="123456789"
+        login=account_helper.default_login,
+        password=account_helper.default_password
     )
     return account_helper
+
 
 
 @pytest.fixture

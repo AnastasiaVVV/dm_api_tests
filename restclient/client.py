@@ -74,7 +74,7 @@ class RestClient:
             method=method,
             full_url=full_url,
             params=kwargs.get('params'),
-            headers=kwargs.get('headers'),
+            headers=kwargs.get('headers') or self.session.headers,
             json=kwargs.get('json'),
             data=kwargs.get('data')
         )
