@@ -130,12 +130,12 @@ class AccountHelper:
         )
         assert response.status_code == 200, f"Пароль не был изменён"
 
-    def logout_user(self):
-        response = self.dm_account_api.login_api.delete_v1_account_login()
+    def logout_user(self, **kwargs):
+        response = self.dm_account_api.login_api.delete_v1_account_login(**kwargs)
         assert response.status_code == 204, f"Пользователь не был разлогинен"
 
-    def logout_user_all(self):
-        response = self.dm_account_api.login_api.delete_v1_account_login_all()
+    def logout_user_all(self, **kwargs):
+        response = self.dm_account_api.login_api.delete_v1_account_login_all(**kwargs)
         assert response.status_code == 204, f"Пользователь не был разлогинен из всех устройств"
 
     @retry(
