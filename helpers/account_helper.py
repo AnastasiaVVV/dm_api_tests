@@ -130,6 +130,14 @@ class AccountHelper:
         )
         assert response.status_code == 200, f"Пароль не был изменён"
 
+    def logout_user(self):
+        response = self.dm_account_api.login_api.delete_v1_account_login()
+        assert response.status_code == 204, f"Пользователь не был разлогинен"
+
+    def logout_user_all(self):
+        response = self.dm_account_api.login_api.delete_v1_account_login_all()
+        assert response.status_code == 204, f"Пользователь не был разлогинен из всех устройств"
+
     @retry(
         stop_max_attempt_number=5,
         retry_on_result=retry_if_result_none,
