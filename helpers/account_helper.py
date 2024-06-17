@@ -105,15 +105,30 @@ class AccountHelper:
         )
         assert response.status_code == 200, f"Пароль не был сброшен"
 
-    def change_registered_user_password(self, login: str, email: str, oldPassword: str, newPassword: str):
+    def change_registered_user_password(self, login: str, email: str, old_password: str, new_password: str):
+        # авторизация
+        json_data = {
+            'login': login,
+            'password': old_password,
+            'rememberMe': True,
+        }
+        response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
+        assert response.status_code == 200, "Пользователь не смог авторизоваться"
+        # получение авторизационного токена
+        # token = self.get_activation_token_by_login(login=login)
+        # assert token is not None, f"Токен для пользователя {login} не был получен"
+        # # сброс пароля
+        # получение токена для сброса пароля
         token = self.get_reset_token_by_login(email=email) #(login=login)
         assert token is not None, f"Токен для сброса пароля пользователя {login} не был получен"
+
+        # смена пароля с авторизационным токеном и токеном для сброса пароля
         response = self.dm_account_api.account_api.put_v1_account_password(
             json_data={
                 "login": login,
                 "token": token,
-                "oldPassword": oldPassword,
-                "newPassword": newPassword,
+                "oldPassword": old_password,
+                "newPassword": new_password,
             }
         )
         assert response.status_code == 200, f"Пароль не был изменён"
