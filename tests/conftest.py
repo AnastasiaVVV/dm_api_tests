@@ -51,7 +51,7 @@ def auth_account_helper(mailhog_api):
     account = DMApiAccount(configuration=dm_api_configuration)
     account_helper = AccountHelper(dm_account_api=account, mailhog=mailhog_api)
     account_helper.default_login = "morugova_test465758886__45"
-    account_helper.default_password = "123456789"
+    account_helper.default_password = "987654321"
     account_helper.auth_client(
         login=account_helper.default_login,
         password=account_helper.default_password

@@ -104,31 +104,34 @@ class AccountHelper:
             }
         )
         assert response.status_code == 200, f"Пароль не был сброшен"
-        token = self.get_reset_token_by_login(login=login)
-        assert token is not None, f"Токен для сброса пароля пользователя {email} не был получен"
+
+    def change_registered_user_password(self, login: str, email: str, oldPassword: str, newPassword: str):
+        token = self.get_reset_token_by_login(email=email) #(login=login)
+        assert token is not None, f"Токен для сброса пароля пользователя {login} не был получен"
         response = self.dm_account_api.account_api.put_v1_account_password(
             json_data={
                 "login": login,
                 "token": token,
-                "oldPassword": "123456789",
-                "newPassword": "987654321"
+                "oldPassword": oldPassword,
+                "newPassword": newPassword,
             }
         )
         assert response.status_code == 200, f"Пароль не был изменён"
 
-        # меняем новый пароль на старый, чтобы следующий прогон был успешен
-        # со старыми данными из фикстуры авторизации пользователя
-        token = self.get_reset_token_by_login(login=login)
-        assert token is not None, f"Токен для сброса пароля пользователя {email} не был получен"
-        response = self.dm_account_api.account_api.put_v1_account_password(
-            json_data={
-                "login": login,
-                "token": token,
-                "oldPassword": "987654321",
-                "newPassword": "123456789"
-            }
-        )
-        assert response.status_code == 200, f"Пароль не был изменён"
+    # def unreset_user_password(self, login: str, email: str):
+    #     # меняем новый пароль на старый, чтобы следующий прогон был успешен
+    #     # со старыми данными из фикстуры авторизации пользователя
+    #     token = self.get_reset_token_by_login(login=login)
+    #     assert token is not None, f"Токен для сброса пароля пользователя {email} не был получен"
+    #     response = self.dm_account_api.account_api.put_v1_account_password(
+    #         json_data={
+    #             "login": login,
+    #             "token": token,
+    #             "oldPassword": "987654321",
+    #             "newPassword": "123456789"
+    #         }
+    #     )
+    #     assert response.status_code == 200, f"Пароль не был изменён"
 
     def logout_user(self, **kwargs):
         response = self.dm_account_api.login_api.delete_v1_account_login(**kwargs)
@@ -186,20 +189,19 @@ class AccountHelper:
     )
     def get_reset_token_by_login(
             self,
-            login,
-            # email
+            # login,
+            email
     ):
         token = None
         response = self.mailhog.mailhog_api.get_api_v2_messages()
         for item in response.json()['items']:
             user_data = loads(item['Content']['Body'])
-            # user_login = user_data['Login']
-            # user_email = item['Content']['Headers']['To'][0]
-            subject = f"=?utf-8?b?0J/QvtC00YLQstC10YDQttC00LXQvdC40LUg0YHQsdGA0L7RgdCw?= =?utf-8?b?INC/0LDRgNC+0LvRjyDQvdCwIERNLkFNINC00LvRjw==?= {login}"
+            user_login = user_data['Login']
+            user_email = item['Content']['Headers']['To'][0]
+            # subject = f"=?utf-8?b?0J/QvtC00YLQstC10YDQttC00LXQvdC40LUg0YHQsdGA0L7RgdCw?= =?utf-8?b?INC/0LDRgNC+0LvRjyDQvdCwIERNLkFNINC00LvRjw==?= {login}"
             subject_letter = item['Content']['Headers']['Subject'][0]
 
-            if subject_letter == subject:
-                # if user_login == login: #user_email == email:
+            # if subject_letter == subject:
+            if user_email == email: #user_login == login:
                 token = user_data['ConfirmationLinkUri'].split('/')[-1]
-        print(f"Токен для сброса пароля: {token}")
         return token
