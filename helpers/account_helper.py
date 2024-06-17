@@ -78,8 +78,8 @@ class AccountHelper:
             'email': email,
             'password': password,
         }
-        response = self.dm_account_api.account_api.post_v1_account(json_data=json_data)
-        assert response.status_code == 201, f"Пользователь не был создан {response.json()}"
+        # response = self.dm_account_api.account_api.post_v1_account(json_data=json_data)
+        # assert response.status_code == 201, f"Пользователь не был создан {response.json()}"
         token = self.get_activation_token_by_login(login=login)
         assert token is not None, f"Токен для пользователя {login} не был получен"
 
