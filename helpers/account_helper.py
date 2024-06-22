@@ -54,6 +54,7 @@ class AccountHelper:
             'rememberMe': remember_me,
         }
         response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
+        assert response.headers["x-dm-auth-token"], f"Токен для пользователя {login} не был получен"
         assert response.status_code == 200, "Пользователь не смог авторизоваться"
         return response
 
@@ -84,12 +85,7 @@ class AccountHelper:
         assert token is not None, f"Токен для пользователя {login} не был получен"
 
     def auth_client(self, login: str, password: str):
-        response = self.dm_account_api.login_api.post_v1_account_login(
-            json_data={
-                "login": login,
-                "password": password
-            }
-        )
+        response = self.user_login(login=login, password=password)
         token = {
             "x-dm-auth-token": response.headers["x-dm-auth-token"]
         }
@@ -117,9 +113,15 @@ class AccountHelper:
         # получение авторизационного токена
         # token = self.get_activation_token_by_login(login=login)
         # assert token is not None, f"Токен для пользователя {login} не был получен"
-        # # сброс пароля
+        # сброс пароля
+        response = self.dm_account_api.account_api.post_v1_account_password(
+            json_data={
+                "login": login,
+                "email": email
+            }
+        )
         # получение токена для сброса пароля
-        token = self.get_reset_token_by_login(email=email) #(login=login)
+        token = self.get_reset_token_by_login(email=email, login=login)
         assert token is not None, f"Токен для сброса пароля пользователя {login} не был получен"
 
         # смена пароля с авторизационным токеном и токеном для сброса пароля
@@ -204,7 +206,7 @@ class AccountHelper:
     )
     def get_reset_token_by_login(
             self,
-            # login,
+            login,
             email
     ):
         token = None
@@ -213,10 +215,10 @@ class AccountHelper:
             user_data = loads(item['Content']['Body'])
             user_login = user_data['Login']
             user_email = item['Content']['Headers']['To'][0]
-            # subject = f"=?utf-8?b?0J/QvtC00YLQstC10YDQttC00LXQvdC40LUg0YHQsdGA0L7RgdCw?= =?utf-8?b?INC/0LDRgNC+0LvRjyDQvdCwIERNLkFNINC00LvRjw==?= {login}"
+            subject = f"=?utf-8?b?0J/QvtC00YLQstC10YDQttC00LXQvdC40LUg0YHQsdGA0L7RgdCw?= =?utf-8?b?INC/0LDRgNC+0LvRjyDQvdCwIERNLkFNINC00LvRjw==?= {login}"
             subject_letter = item['Content']['Headers']['Subject'][0]
 
-            # if subject_letter == subject:
-            if user_email == email: #user_login == login:
+            if subject_letter == subject:
+            # if user_email == email and user_login == login:
                 token = user_data['ConfirmationLinkUri'].split('/')[-1]
         return token
