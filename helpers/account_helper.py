@@ -54,6 +54,7 @@ class AccountHelper:
             'rememberMe': remember_me,
         }
         response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
+        assert response.headers["x-dm-auth-token"], f"Токен для пользователя {login} не был получен"
         assert response.status_code == 200, "Пользователь не смог авторизоваться"
         return response
 
@@ -78,10 +79,84 @@ class AccountHelper:
             'email': email,
             'password': password,
         }
-        response = self.dm_account_api.account_api.post_v1_account(json_data=json_data)
-        assert response.status_code == 201, f"Пользователь не был создан {response.json()}"
+        # response = self.dm_account_api.account_api.post_v1_account(json_data=json_data)
+        # assert response.status_code == 201, f"Пользователь не был создан {response.json()}"
         token = self.get_activation_token_by_login(login=login)
         assert token is not None, f"Токен для пользователя {login} не был получен"
+
+    def auth_client(self, login: str, password: str):
+        response = self.user_login(login=login, password=password)
+        token = {
+            "x-dm-auth-token": response.headers["x-dm-auth-token"]
+        }
+        self.dm_account_api.account_api.set_headers(token)
+        self.dm_account_api.login_api.set_headers(token)
+
+    def reset_user_password(self, login: str, email: str):
+        response = self.dm_account_api.account_api.post_v1_account_password(
+            json_data={
+                'login': login,
+                'email': email,
+            }
+        )
+        assert response.status_code == 200, f"Пароль не был сброшен"
+
+    def change_registered_user_password(self, login: str, email: str, old_password: str, new_password: str):
+        # авторизация
+        json_data = {
+            'login': login,
+            'password': old_password,
+            'rememberMe': True,
+        }
+        response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
+        assert response.status_code == 200, "Пользователь не смог авторизоваться"
+        # получение авторизационного токена
+        # token = self.get_activation_token_by_login(login=login)
+        # assert token is not None, f"Токен для пользователя {login} не был получен"
+        # сброс пароля
+        response = self.dm_account_api.account_api.post_v1_account_password(
+            json_data={
+                "login": login,
+                "email": email
+            }
+        )
+        # получение токена для сброса пароля
+        token = self.get_reset_token_by_login(email=email, login=login)
+        assert token is not None, f"Токен для сброса пароля пользователя {login} не был получен"
+
+        # смена пароля с авторизационным токеном и токеном для сброса пароля
+        response = self.dm_account_api.account_api.put_v1_account_password(
+            json_data={
+                "login": login,
+                "token": token,
+                "oldPassword": old_password,
+                "newPassword": new_password,
+            }
+        )
+        assert response.status_code == 200, f"Пароль не был изменён"
+
+    # def unreset_user_password(self, login: str, email: str):
+    #     # меняем новый пароль на старый, чтобы следующий прогон был успешен
+    #     # со старыми данными из фикстуры авторизации пользователя
+    #     token = self.get_reset_token_by_login(login=login)
+    #     assert token is not None, f"Токен для сброса пароля пользователя {email} не был получен"
+    #     response = self.dm_account_api.account_api.put_v1_account_password(
+    #         json_data={
+    #             "login": login,
+    #             "token": token,
+    #             "oldPassword": "987654321",
+    #             "newPassword": "123456789"
+    #         }
+    #     )
+    #     assert response.status_code == 200, f"Пароль не был изменён"
+
+    def logout_user(self, **kwargs):
+        response = self.dm_account_api.login_api.delete_v1_account_login(**kwargs)
+        assert response.status_code == 204, f"Пользователь не был разлогинен"
+
+    def logout_user_all(self, **kwargs):
+        response = self.dm_account_api.login_api.delete_v1_account_login_all(**kwargs)
+        assert response.status_code == 204, f"Пользователь не был разлогинен из всех устройств"
 
     @retry(
         stop_max_attempt_number=5,
@@ -122,4 +197,28 @@ class AccountHelper:
             if user_login == login and user_new_email == email:
                 token = user_data['ConfirmationLinkUrl'].split('/')[-1]
 
+        return token
+
+    @retry(
+        stop_max_attempt_number=5,
+        retry_on_result=retry_if_result_none,
+        wait_fixed=1000
+    )
+    def get_reset_token_by_login(
+            self,
+            login,
+            email
+    ):
+        token = None
+        response = self.mailhog.mailhog_api.get_api_v2_messages()
+        for item in response.json()['items']:
+            user_data = loads(item['Content']['Body'])
+            user_login = user_data['Login']
+            user_email = item['Content']['Headers']['To'][0]
+            subject = f"=?utf-8?b?0J/QvtC00YLQstC10YDQttC00LXQvdC40LUg0YHQsdGA0L7RgdCw?= =?utf-8?b?INC/0LDRgNC+0LvRjyDQvdCwIERNLkFNINC00LvRjw==?= {login}"
+            subject_letter = item['Content']['Headers']['Subject'][0]
+
+            if subject_letter == subject:
+            # if user_email == email and user_login == login:
+                token = user_data['ConfirmationLinkUri'].split('/')[-1]
         return token
